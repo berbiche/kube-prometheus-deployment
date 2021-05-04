@@ -1,0 +1,24 @@
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  annotations:
+    cert-manager.io/cluster-issuer: letsencrypt-prod
+    external-dns.alpha.kubernetes.io/target: k8s.qt.rs
+    traefik.ingress.kubernetes.io/router.middlewares: traefik-forward-auth@kubernetescrd
+    traefik.ingress.kubernetes.io/router.tls: "true"
+  name: monitoring
+  namespace: monitoring
+spec:
+  ingressClassName: traefik
+  rules:
+  - host: monitoring.k8s.qt.rs
+    http:
+      paths:
+      - backend:
+          service:
+            name: grafana
+            port: http
+  tls:
+  - hosts:
+    - monitoring.k8s.qt.rs
+    secretName: monitoring-k8s-qt-rs
