@@ -104,7 +104,9 @@ local kp =
             backend: {
               service: {
                 name: 'grafana',
-                port: 'http',
+                port: {
+                  name: 'http',
+                },
               },
             },
           }],
