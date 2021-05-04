@@ -36,7 +36,30 @@ jobs:
             kustomization.yaml
             manifests/
           if-no-files-found: error
-  publish:
+  # publish:
+  #   permissions:
+  #     actions: read
+  #     contents: write
+  #   needs: compile
+  #   runs-on: ubuntu-latest
+  #   if: startsWith(github.ref, 'refs/tags/')
+  #   steps:
+  #     - name: Download manifests Artifact
+  #       uses: actions/download-artifact@v2
+  #       with:
+  #         name: manifests
+  #     - name: Zip manifests
+  #       run: zip -r manifests.zip kustomization.yaml LICENSE manifests
+  #     - name: Release
+  #       if: ${{ success() }}
+  #       uses: softprops/action-gh-release@v1
+  #       with:
+  #         # Not supported yet
+  #         # fail_on_unmatched_files: true
+  #         files: manifests.zip
+  #       env:
+  #         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+  push-to-branch:
     permissions:
       actions: read
       contents: write
@@ -48,14 +71,15 @@ jobs:
         uses: actions/download-artifact@v2
         with:
           name: manifests
-      - name: Zip manifests
-        run: zip -r manifests.zip kustomization.yaml LICENSE manifests
-      - name: Release
-        if: ${{ success() }}
-        uses: softprops/action-gh-release@v1
-        with:
-          # Not supported yet
-          # fail_on_unmatched_files: true
-          files: manifests.zip
+      - name: Push to 'manifests' branch
         env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          BRANCH: manifests
+        run: |
+          git init
+          git remote add origin "$GITHUB_SERVER_URL/$GITHUB_REPOSITORY"
+          git config --local user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git config --local user.name "github-actions[bot]"
+          git symbolic-ref HEAD refs/heads/$BRANCH
+          git add .
+          git commit -m "New manifest release: ${GITHUB_REF#refs/*/}"
+          git push --force origin $BRANCH
