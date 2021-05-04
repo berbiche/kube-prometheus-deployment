@@ -4,38 +4,11 @@
     {
       "source": {
         "git": {
-          "remote": "https://github.com/amoghk/coredns-mixin.git",
-          "subdir": ""
-        }
-      },
-      "version": "master"
-    },
-    {
-      "source": {
-        "git": {
-          "remote": "https://github.com/lukas-vlcek/elasticsearch-mixin.git",
-          "subdir": ""
-        }
-      },
-      "version": "master"
-    },
-    {
-      "source": {
-        "git": {
           "remote": "https://github.com/prometheus-operator/kube-prometheus.git",
           "subdir": "jsonnet/kube-prometheus"
         }
       },
-      "version": "c1130442d68bf4bfbd1544711b67c98a28f2a327"
-    },
-    {
-      "source": {
-        "git": {
-          "remote": "https://github.com/prometheus/mysqld_exporter.git",
-          "subdir": "mysqld-mixin"
-        }
-      },
-      "version": "master"
+      "version": "release-0.8"
     }
   ],
   "legacyImports": true

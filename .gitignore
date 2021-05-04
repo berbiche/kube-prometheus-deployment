@@ -1,3 +1,5 @@
 vendor/
 manifest/
+manifests/
 kustomization.yaml
+.direnv/
