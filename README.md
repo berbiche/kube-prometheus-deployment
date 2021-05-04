@@ -21,7 +21,7 @@ apiVersion: kustomize.config.k8s.io/v1beta1
 kind: Kustomization
 
 resources:
-- https://github.com/berbiche/kube-prometheus-kubespray/releases/download/v0.1.2/manifests.zip
+- https://github.com/berbiche/kube-prometheus-kubespray?ref=release-v0.3.2
 ```
 
 An additional secret will have to be added and generated:
