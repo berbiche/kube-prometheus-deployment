@@ -101,6 +101,8 @@ local kp =
         host: 'monitoring.' + domain,
         http: {
           paths: [{
+            path: '/',
+            pathType: 'Prefix',
             backend: {
               service: {
                 name: 'grafana',
