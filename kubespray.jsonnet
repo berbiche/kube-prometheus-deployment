@@ -188,10 +188,16 @@ local manifests =
   { [name + '-ingress']: kp.ingress[name] for name in std.objectFields(kp.ingress) };
 
 local kustomizationResourceFile(name) = './manifests/' + name + '.yaml';
+local strContains(str, substr) = std.length(std.findSubstr(substr, str)) > 0;
 local kustomization = {
   apiVersion: 'kustomize.config.k8s.io/v1beta1',
   kind: 'Kustomization',
-  resources: std.map(kustomizationResourceFile, std.objectFields(manifests)),
+  local resources = std.map(kustomizationResourceFile, std.objectFields(manifests)),
+  resources: [
+    file for file in resources if strContains(file, 'manifests/setup/')
+  ] + [
+    file for file in resources if ! strContains(file, 'manifests/setup/')
+  ],
 };
 
 manifests {
