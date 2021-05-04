@@ -130,7 +130,7 @@ local modifiedGrafana = kp.grafana + {
   local g = kp.grafana,
   deployment+: {
     spec+: {
-      strategy: 'Recreate',
+      strategy: { type: 'Recreate' },
       template+: {
         spec+: {
           containers: [
