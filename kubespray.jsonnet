@@ -168,9 +168,7 @@ local modifiedGrafana = kp.grafana + {
 };
 
 local manifests =
-  // Uncomment line below to enable vertical auto scaling of kube-state-metrics
-  //{ ['ksm-autoscaler-' + name]: kp.ksmAutoscaler[name] for name in std.objectFields(kp.ksmAutoscaler) } +
-  { ['setup/0namespace-' + name]: kp.kubePrometheus[name] for name in std.objectFields(kp.kubePrometheus) } +
+  { 'setup/0namespace-namespace': kp.kubePrometheus.namespace } +
   {
     ['setup/prometheus-operator-' + name]: kp.prometheusOperator[name]
     for name in std.filter((function(name) name != 'serviceMonitor' && name != 'prometheusRule'), std.objectFields(kp.prometheusOperator))
