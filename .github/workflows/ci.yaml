@@ -48,17 +48,6 @@ jobs:
   #       uses: actions/download-artifact@v2
   #       with:
   #         name: manifests
-  #     - name: Zip manifests
-  #       run: zip -r manifests.zip kustomization.yaml LICENSE manifests
-  #     - name: Release
-  #       if: ${{ success() }}
-  #       uses: softprops/action-gh-release@v1
-  #       with:
-  #         # Not supported yet
-  #         # fail_on_unmatched_files: true
-  #         files: manifests.zip
-  #       env:
-  #         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
   push-to-branch:
     permissions:
       actions: read
@@ -72,16 +61,31 @@ jobs:
         with:
           name: manifests
       - name: Push to 'manifests' branch
+        id: push-manifests
         env:
           BRANCH: manifests
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           TAG="${GITHUB_REF#refs/tags/}"
+          RELEASE_TAG="release-$TAG"
           git init
           git config --local user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git config --local user.name "github-actions[bot]"
-          git symbolic-ref HEAD refs/heads/${BRANCH}
+          git symbolic-ref HEAD "refs/heads/${BRANCH}"
           git add .
-          git commit -m "New manifest release: $TAG"
-          git tag "release-$TAG"
-          git push --force --atomic "https://${GITHUB_ACTOR}:${GITHUB_TOKEN}@github.com/$GITHUB_REPOSITORY.git" HEAD:${BRANCH} "release-$TAG"
+          git commit -m "New manifest release for tag $TAG"
+          git tag "$RELEASE_TAG"
+          git push --force --atomic "https://${GITHUB_ACTOR}:${GITHUB_TOKEN}@github.com/$GITHUB_REPOSITORY.git" "HEAD:${BRANCH}" "$RELEASE_TAG"
+          echo "::set-output name=RELEASE_BRANCH::$RELEASE_TAG"
+      - name: Zip manifests
+        run: zip -r manifests.zip kustomization.yaml LICENSE manifests
+      - name: Release
+        if: ${{ success() }}
+        uses: softprops/action-gh-release@v1
+        with:
+          # Not supported yet
+          # fail_on_unmatched_files: true
+          tag_name: ${{ steps.push-manifests.outputs.RELEASE_BRANCH }}
+          files: manifests.zip
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
