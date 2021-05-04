@@ -59,6 +59,7 @@ local kp =
               header_name: 'X-Forwarded-User',
               header_property: 'username',
               // whitelist: ''
+              enable_login_token: false,
             },
             server+: {
               domain: 'monitoring.' + domain,
@@ -66,6 +67,8 @@ local kp =
             },
             users+: {
               allow_sign_up: false,
+              auto_assign_org: true,
+              auto_assign_org_role: 'Editor',
             },
           },
         },
