@@ -1,4 +1,5 @@
-local domain = 'k8s.qt.rs';
+local baseDomain = 'k8s.qt.rs';
+local domain = 'monitoring.' + baseDomain;
 
 local ingress(name, namespace, hosts, rules) = {
   apiVersion: 'networking.k8s.io/v1',
@@ -10,7 +11,7 @@ local ingress(name, namespace, hosts, rules) = {
       'cert-manager.io/cluster-issuer': 'letsencrypt-prod',
       'traefik.ingress.kubernetes.io/router.middlewares': 'traefik-forward-auth@kubernetescrd',
       'traefik.ingress.kubernetes.io/router.tls': 'true',
-      'external-dns.alpha.kubernetes.io/target': 'k8s.qt.rs',
+      'external-dns.alpha.kubernetes.io/target': baseDomain,
     },
   },
   spec: {
@@ -42,7 +43,7 @@ local kp =
         namespace: 'monitoring',
       },
       grafana+: {
-        plugins: ['grafana-piechart-panel'],
+        plugins: ['grafana-piechart-panel', 'grafana-polystat-panel', 'snuids-trafficlights-panel'],
         config+: {
           sections+: {
             analytics+: {
@@ -61,9 +62,12 @@ local kp =
               // whitelist: ''
               enable_login_token: false,
             },
+            panels+: {
+              disable_sanitize_html: true,
+            },
             server+: {
-              domain: 'monitoring.' + domain,
-              root_url: 'https://monitoring.' + domain,
+              domain: domain,
+              root_url: 'https://' + domain,
             },
             users+: {
               allow_sign_up: false,
@@ -100,23 +104,59 @@ local kp =
     },
 
     ingress+:: {
-      monitoring: ingress('monitoring', $.values.common.namespace, ['monitoring.' + domain], [{
-        host: 'monitoring.' + domain,
-        http: {
-          paths: [{
-            path: '/',
-            pathType: 'Prefix',
-            backend: {
-              service: {
-                name: 'grafana',
-                port: {
-                  name: 'http',
+      monitoring: ingress('monitoring', $.values.common.namespace, [domain], [
+        {
+          host: domain,
+          http: {
+            paths: [{
+              path: '/',
+              pathType: 'Prefix',
+              backend: {
+                service: {
+                  name: 'grafana',
+                  port: {
+                    name: 'http',
+                  },
                 },
               },
-            },
-          }],
+            }],
+          },
         },
-      }])
+        {
+          host: 'alertmanager' + baseDomain,
+          http: {
+            paths: [{
+              path: '/',
+              pathType: 'Prefix',
+              backend: {
+                service: {
+                  name: 'alertmanager-main',
+                  port: {
+                    name: 'http',
+                  },
+                },
+              },
+            }],
+          },
+        },
+        {
+          host: 'prometheus' + baseDomain,
+          http: {
+            paths: [{
+              path: '/',
+              pathType: 'Prefix',
+              backend: {
+                service: {
+                  name: 'prometheus-k8s',
+                  port: {
+                    name: 'http',
+                  },
+                },
+              },
+            }],
+          },
+        }
+      ])
     },
 
     kubePrometheus+:: {
