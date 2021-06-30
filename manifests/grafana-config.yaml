@@ -1,0 +1,13 @@
+apiVersion: v1
+data:
+  grafana.ini: W2FuYWx5dGljc10KcmVwb3J0aW5nX2VuYWJsZWQgPSBmYWxzZQpbYXV0aC5hbm9ueW1vdXNdCmVuYWJsZWQgPSBmYWxzZQpbYXV0aC5iYXNpY10KZW5hYmxlZCA9IGZhbHNlClthdXRoLnByb3h5XQplbmFibGVfbG9naW5fdG9rZW4gPSBmYWxzZQplbmFibGVkID0gdHJ1ZQpoZWFkZXJfbmFtZSA9IFgtRm9yd2FyZGVkLVVzZXIKaGVhZGVyX3Byb3BlcnR5ID0gdXNlcm5hbWUKW3BhbmVsc10KZGlzYWJsZV9zYW5pdGl6ZV9odG1sID0gdHJ1ZQpbc2VydmVyXQpkb21haW4gPSBtb25pdG9yaW5nLms4cy5xdC5ycwpyb290X3VybCA9IGh0dHBzOi8vbW9uaXRvcmluZy5rOHMucXQucnMKW3VzZXJzXQphbGxvd19zaWduX3VwID0gZmFsc2UKYXV0b19hc3NpZ25fb3JnID0gdHJ1ZQphdXRvX2Fzc2lnbl9vcmdfcm9sZSA9IEVkaXRvcgo=
+kind: Secret
+metadata:
+  labels:
+    app.kubernetes.io/component: grafana
+    app.kubernetes.io/name: grafana
+    app.kubernetes.io/part-of: kube-prometheus
+    app.kubernetes.io/version: 7.5.4
+  name: grafana-config
+  namespace: monitoring
+type: Opaque
