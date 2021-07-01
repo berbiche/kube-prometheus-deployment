@@ -24,8 +24,10 @@ local ingress(name, namespace, hosts, rules) = {
   },
 };
 
+local main = import 'kube-prometheus/main.libsonnet';
+
 local kp =
-  (import 'kube-prometheus/main.libsonnet') +
+  main +
   // Uncomment the following imports to enable its patches
   // (import 'kube-prometheus/addons/anti-affinity.libsonnet') +
   // (import 'kube-prometheus/addons/managed-cluster.libsonnet') +
@@ -100,6 +102,18 @@ local kp =
             },
           },
         },
+      },
+
+      # Add required accesses for the dashboard sidecar
+      clusterRole+: {
+        rules+: [
+          {
+            apiGroups: [''],
+            resources: ['pods', 'endpoints', 'services'],
+            /* verbs: ['get', 'watch', 'list'], */
+            verbs: ['list'],
+          },
+        ],
       },
     },
 
@@ -176,6 +190,24 @@ local kp =
 // Last, we enable the grafana configmap sidecar to provision dashboards
 local modifiedGrafana = kp.grafana + {
   local g = kp.grafana,
+  containers: [{
+    name: 'grafana-sc-dashboard',
+    image: 'quay.io/kiwigrid/k8s-sidecar:1.12.2',
+    imagePullPolicy: 'IfNotPresent',
+    resources: {},
+    env: [
+      { name: 'METHOD', value: 'WATCH' },
+      { name: 'LABEL', value: 'grafana_dashboard' },
+      { name: 'FOLDER', value: '/tmp/dashboards/' },
+      { name: 'RESOURCE', value: 'both' },
+      /* { name: 'UNIQUE_FILENAMES', value: false }, */
+      { name: 'NAMESPACE', value: 'ALL' },
+    ],
+    volumeMounts: [{
+      name: 'sc-dashboard-volume',
+      mountPath: '/tmp/dashboards',
+    }],
+  }],
   deployment+: {
     spec+: {
       strategy: { type: 'Recreate' },
@@ -197,24 +229,7 @@ local modifiedGrafana = kp.grafana + {
               ],
             })
             for container in g.deployment.spec.template.spec.containers
-          ] + [{
-            name: 'grafana-sc-dashboard',
-            image: 'quay.io/kiwigrid/k8s-sidecar:1.12.2',
-            imagePullPolicy: 'IfNotPresent',
-            resources: {},
-            env: [
-              { name: 'METHOD', value: 'WATCH' },
-              { name: 'LABEL', value: 'grafana_dashboard' },
-              { name: 'FOLDER', value: '/tmp/dashboards/' },
-              { name: 'RESOURCE', value: 'both' },
-              /* { name: 'UNIQUE_FILENAMES', value: false }, */
-              { name: 'NAMESPACE', value: 'ALL' },
-            ],
-            volumeMounts: [{
-              name: 'sc-dashboard-volume',
-              mountPath: '/tmp/dashboards',
-            }],
-          }],
+          ],
           volumes: [
             if volume.name == 'grafana-storage'
             then {
@@ -242,11 +257,8 @@ local modifiedGrafana = kp.grafana + {
     kind: 'ConfigMap',
     metadata: {
       name: 'grafana-config-dashboards',
-      namespace: g.deployment.metadata.namespace,
-      /* labels: { */
-      /*   'app.kubernetes.io/version': '', */
-      /*   'app.kubernetes.io/managed-by': '' */
-      /* }, */
+      namespace: g._config.namespace,
+      labels: g._config.commonLabels,
     },
     data: {
       'provider.yaml': |||
@@ -262,6 +274,35 @@ local modifiedGrafana = kp.grafana + {
             foldersFromFilesStructure: false
             path: '/tmp/dashboards/'
       |||,
+    },
+  },
+  'dashboardSidecar-clusterRole'+: {
+    apiVersion: 'rbac.authorization.k8s.io/v1',
+    kind: 'ClusterRole',
+    metadata: {
+      name: 'grafana',
+    },
+    rules: [{
+      apiGroups: [''],
+      resources: ['configmaps'],
+      verbs: ['get', 'watch', 'list'],
+    }],
+  },
+  'dashboardSidecar-clusterRoleBinding'+: {
+    apiVersion: 'rbac.authorization.k8s.io/v1',
+    kind: 'ClusterRoleBinding',
+    metadata: {
+      name: 'grafana',
+    },
+    subjects: [{
+      kind: 'ServiceAccount',
+      name: 'grafana',
+      namespace: kp.values.common.namespace,
+    }],
+    roleRef: {
+      apiGroup: 'rbac.authorization.k8s.io',
+      kind: 'ClusterRole',
+      name: 'grafana',
     },
   },
   pvc: {
