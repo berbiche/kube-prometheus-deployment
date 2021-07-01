@@ -118,7 +118,7 @@ local kp =
     },
 
     ingress+:: {
-      monitoring: ingress('monitoring', $.values.common.namespace, [domain], [
+      monitoring: ingress('monitoring', $.values.common.namespace, [domain, 'alertmanager.' + baseDomain, 'prometheus.' + baseDomain], [
         {
           host: domain,
           http: {
@@ -137,7 +137,7 @@ local kp =
           },
         },
         {
-          host: 'alertmanager' + baseDomain,
+          host: 'alertmanager.' + baseDomain,
           http: {
             paths: [{
               path: '/',
@@ -154,7 +154,7 @@ local kp =
           },
         },
         {
-          host: 'prometheus' + baseDomain,
+          host: 'prometheus.' + baseDomain,
           http: {
             paths: [{
               path: '/',
