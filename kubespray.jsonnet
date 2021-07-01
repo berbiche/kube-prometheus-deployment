@@ -173,6 +173,7 @@ local kp =
 // We need to inject some secrets as environment variables
 // We can't use a configMap because there's already a generated config
 // We also want temporary stateful storage with a PVC
+// Last, we enable the grafana configmap sidecar to provision dashboards
 local modifiedGrafana = kp.grafana + {
   local g = kp.grafana,
   deployment+: {
@@ -182,10 +183,38 @@ local modifiedGrafana = kp.grafana + {
         spec+: {
           containers: [
             (container + {
-              envFrom+: [{ secretRef: { name: 'grafana-admin-credentials' } }]
+              envFrom+: [{ secretRef: { name: 'grafana-admin-credentials' } }],
+              volumeMounts+: [
+                {
+                  name: 'sc-dashboard-volume',
+                  mountPath: '/tmp/dashboards',
+                },
+                {
+                  name: 'sc-dashboard-provider',
+                  mountPath: '/etc/grafana/provisioning/dashboards/sc-dashboardproviders.yaml',
+                  subPath: 'provider.yaml'
+                },
+              ],
             })
             for container in g.deployment.spec.template.spec.containers
-          ],
+          ] + [{
+            name: 'grafana-sc-dashboard',
+            image: 'quay.io/kiwigrid/k8s-sidecar:1.12.2',
+            imagePullPolicy: 'IfNotPresent',
+            resources: {},
+            env: [
+              { name: 'METHOD', value: 'WATCH' },
+              { name: 'LABEL', value: 'grafana_dashboard' },
+              { name: 'FOLDER', value: '/tmp/dashboards/' },
+              { name: 'RESOURCE', value: 'both' },
+              /* { name: 'UNIQUE_FILENAMES', value: false }, */
+              { name: 'NAMESPACE', value: 'ALL' },
+            ],
+            volumeMounts: [{
+              name: 'sc-dashboard-volume',
+              mountPath: '/tmp/dashboards',
+            }],
+          }],
           volumes: [
             if volume.name == 'grafana-storage'
             then {
@@ -194,9 +223,45 @@ local modifiedGrafana = kp.grafana + {
             }
             else volume
             for volume in g.deployment.spec.template.spec.volumes
-          ]
+          ] + [
+            {
+              name: 'sc-dashboard-volume',
+              emptyDir: {},
+            },
+            {
+              name: 'sc-dashboard-provider',
+              configMap: { name: 'grafana-config-dashboards' },
+            }
+          ],
         },
       },
+    },
+  },
+  dashboardSidecar+: {
+    apiVersion: 'v1',
+    kind: 'ConfigMap',
+    metadata: {
+      name: 'grafana-config-dashboards',
+      namespace: g.deployment.metadata.namespace,
+      /* labels: { */
+      /*   'app.kubernetes.io/version': '', */
+      /*   'app.kubernetes.io/managed-by': '' */
+      /* }, */
+    },
+    data: {
+      'provider.yaml': |||
+        apiVersion: 1
+        providers:
+        - name: 'sidecarProvider'
+          orgId: 1
+          type: 'file'
+          disableDeletion: false
+          allowUiUpdates: false
+          updateIntervalSeconds: 30
+          options:
+            foldersFromFilesStructure: false
+            path: '/tmp/dashboards/'
+      |||,
     },
   },
   pvc: {
