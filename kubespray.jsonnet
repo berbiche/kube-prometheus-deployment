@@ -111,7 +111,7 @@ local kp =
             apiGroups: [''],
             resources: ['pods', 'endpoints', 'services'],
             /* verbs: ['get', 'watch', 'list'], */
-            verbs: ['get', 'list'],
+            verbs: ['get', 'watch', 'list'],
           },
         ],
       },
@@ -203,11 +203,6 @@ local modifiedGrafana = kp.grafana + {
                   name: 'sc-dashboard-volume',
                   mountPath: '/tmp/dashboards',
                 },
-                {
-                  name: 'sc-dashboard-provider',
-                  mountPath: '/etc/grafana/provisioning/dashboards/sc-dashboardproviders.yaml',
-                  subPath: 'provider.yaml'
-                },
               ],
             })
             for container in g.deployment.spec.template.spec.containers
@@ -251,15 +246,8 @@ local modifiedGrafana = kp.grafana + {
       },
     },
   },
-  dashboardSidecar+: {
-    apiVersion: 'v1',
-    kind: 'ConfigMap',
-    metadata: {
-      name: 'grafana-config-dashboards',
-      namespace: g._config.namespace,
-      labels: g._config.commonLabels,
-    },
-    data: {
+  dashboardSources+: {
+    data+: {
       'provider.yaml': |||
         apiVersion: 1
         providers:
