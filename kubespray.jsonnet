@@ -237,10 +237,6 @@ local modifiedGrafana = kp.grafana + {
               name: 'sc-dashboard-volume',
               emptyDir: {},
             },
-            {
-              name: 'sc-dashboard-provider',
-              configMap: { name: 'grafana-config-dashboards' },
-            }
           ],
         },
       },
