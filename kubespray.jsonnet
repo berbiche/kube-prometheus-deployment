@@ -104,14 +104,14 @@ local kp =
         },
       },
 
-      # Add required accesses for the dashboard sidecar
+      # Add required accesses for the dashboard sidecar?
       clusterRole+: {
         rules+: [
           {
             apiGroups: [''],
             resources: ['pods', 'endpoints', 'services'],
             /* verbs: ['get', 'watch', 'list'], */
-            verbs: ['list'],
+            verbs: ['get', 'list'],
           },
         ],
       },
@@ -283,7 +283,7 @@ local modifiedGrafana = kp.grafana + {
     },
     rules: [{
       apiGroups: [''],
-      resources: ['configmaps'],
+      resources: ['configmaps', 'secrets'],
       verbs: ['get', 'watch', 'list'],
     }],
   },
