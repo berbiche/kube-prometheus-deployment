@@ -1,0 +1,18 @@
+- env:
+  - name: METHOD
+    value: WATCH
+  - name: LABEL
+    value: grafana_dashboard
+  - name: FOLDER
+    value: /tmp/dashboards/
+  - name: RESOURCE
+    value: both
+  - name: NAMESPACE
+    value: ALL
+  image: quay.io/kiwigrid/k8s-sidecar:1.12.2
+  imagePullPolicy: IfNotPresent
+  name: grafana-sc-dashboard
+  resources: {}
+  volumeMounts:
+  - mountPath: /tmp/dashboards
+    name: sc-dashboard-volume
