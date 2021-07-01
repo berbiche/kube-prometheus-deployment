@@ -190,24 +190,6 @@ local kp =
 // Last, we enable the grafana configmap sidecar to provision dashboards
 local modifiedGrafana = kp.grafana + {
   local g = kp.grafana,
-  containers: [{
-    name: 'grafana-sc-dashboard',
-    image: 'quay.io/kiwigrid/k8s-sidecar:1.12.2',
-    imagePullPolicy: 'IfNotPresent',
-    resources: {},
-    env: [
-      { name: 'METHOD', value: 'WATCH' },
-      { name: 'LABEL', value: 'grafana_dashboard' },
-      { name: 'FOLDER', value: '/tmp/dashboards/' },
-      { name: 'RESOURCE', value: 'both' },
-      /* { name: 'UNIQUE_FILENAMES', value: false }, */
-      { name: 'NAMESPACE', value: 'ALL' },
-    ],
-    volumeMounts: [{
-      name: 'sc-dashboard-volume',
-      mountPath: '/tmp/dashboards',
-    }],
-  }],
   deployment+: {
     spec+: {
       strategy: { type: 'Recreate' },
@@ -229,7 +211,24 @@ local modifiedGrafana = kp.grafana + {
               ],
             })
             for container in g.deployment.spec.template.spec.containers
-          ],
+          ] + [{
+            name: 'grafana-sc-dashboard',
+            image: 'quay.io/kiwigrid/k8s-sidecar:1.12.2',
+            imagePullPolicy: 'IfNotPresent',
+            resources: {},
+            env: [
+              { name: 'METHOD', value: 'WATCH' },
+              { name: 'LABEL', value: 'grafana_dashboard' },
+              { name: 'FOLDER', value: '/tmp/dashboards/' },
+              { name: 'RESOURCE', value: 'both' },
+              /* { name: 'UNIQUE_FILENAMES', value: false }, */
+              { name: 'NAMESPACE', value: 'ALL' },
+            ],
+            volumeMounts: [{
+              name: 'sc-dashboard-volume',
+              mountPath: '/tmp/dashboards',
+            }],
+          }],
           volumes: [
             if volume.name == 'grafana-storage'
             then {
