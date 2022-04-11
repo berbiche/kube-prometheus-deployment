@@ -31,7 +31,7 @@ jobs:
       - name: Build manifests
         run: nix-shell --run './build.sh kubespray.jsonnet'
       - name: Archive manifests
-        uses: actions/upload-artifact@v2
+        uses: actions/upload-artifact@v3
         if: ${{ success() }}
         with:
           name: manifests
